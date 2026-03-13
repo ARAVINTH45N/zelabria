@@ -1,227 +1,80 @@
-import { useState } from "react";
-import axios from "axios";
+import { useEffect, useState } from "react";
+import "./index.css";
 
 function App() {
 
-  const [name,setName] = useState("");
-  const [email,setEmail] = useState("");
-  const [password,setPassword] = useState("");
+  const [internships, setInternships] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const [user,setUser] = useState(null);
-  const [internships,setInternships] = useState([]);
-  const [recommended,setRecommended] = useState([]);
+  const API_URL = "https://zelabria-api.onrender.com";
 
-  // SIGNUP
-  const signup = async () => {
+  useEffect(() => {
+    fetchInternships();
+  }, []);
 
-    try{
+  const fetchInternships = async () => {
+    try {
 
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/signup",
-        {name,email,password}
-      );
+      const res = await fetch(`${API_URL}/api/internships`);
+      const data = await res.json();
 
-      alert(res.data.message);
+      setInternships(data);
+      setLoading(false);
 
-    }catch(err){
-
-      alert("Signup failed");
-
+    } catch (error) {
+      console.error("Error fetching internships:", error);
     }
-
   };
 
-
-  // LOGIN
-  const login = async () => {
-
-    try{
-
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        {email,password}
-      );
-
-      setUser(res.data.user);
-
-      alert("Login successful");
-
-    }catch(err){
-
-      alert("Login failed");
-
-    }
-
-  };
-
-
-  // LOAD ALL INTERNSHIPS
-  const loadInternships = async () => {
-
-    try{
-
-      const res = await axios.get(
-        "http://localhost:5000/api/internships/all"
-      );
-
-      setInternships(res.data);
-
-    }catch(err){
-
-      alert("Failed to load internships");
-
-    }
-
-  };
-
-
-  // LOAD RECOMMENDED INTERNSHIPS
-  const loadRecommended = async () => {
-
-    try{
-
-      const res = await axios.get(
-        `http://localhost:5000/api/match/user/${user.id}`
-      );
-
-      setRecommended(res.data.matches);
-
-    }catch(err){
-
-      alert("Failed to load recommendations");
-
-    }
-
-  };
-
+  const filteredInternships = internships.filter((job) =>
+    job.title.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
+    <div className="container">
 
-    <div style={{padding:"40px",fontFamily:"Arial"}}>
+      <h1 className="title">ZELABRIA Internship Alerts</h1>
 
-      <h1>ZELABRIA Internship Platform</h1>
+      <input
+        type="text"
+        placeholder="Search internships..."
+        className="search"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
+      {loading ? (
+        <p className="loading">Loading internships...</p>
+      ) : (
+        <div className="grid">
 
-      {!user && (
+          {filteredInternships.map((job) => (
+            <div className="card" key={job._id}>
 
-        <div>
+              <h2>{job.title}</h2>
 
-          <h2>Signup</h2>
+              <p className="company">{job.company}</p>
 
-          <input
-            placeholder="Name"
-            value={name}
-            onChange={(e)=>setName(e.target.value)}
-          />
+              <p>{job.location}</p>
 
-          <br/><br/>
-
-          <input
-            placeholder="Email"
-            value={email}
-            onChange={(e)=>setEmail(e.target.value)}
-          />
-
-          <br/><br/>
-
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e)=>setPassword(e.target.value)}
-          />
-
-          <br/><br/>
-
-          <button onClick={signup}>
-            Signup
-          </button>
-
-          <br/><br/>
-
-          <h2>Login</h2>
-
-          <button onClick={login}>
-            Login
-          </button>
-
-        </div>
-
-      )}
-
-
-      {user && (
-
-        <div>
-
-          <h2>Welcome {user.name}</h2>
-
-          <button onClick={loadInternships}>
-            Load All Internships
-          </button>
-
-          <button onClick={loadRecommended} style={{marginLeft:"10px"}}>
-            Recommended for You
-          </button>
-
-
-          <h3>Recommended Internships</h3>
-
-          {recommended.map((job,index)=>(
-            <div
-              key={index}
-              style={{
-                border:"1px solid green",
-                padding:"10px",
-                margin:"10px"
-              }}
-            >
-
-              <h4>{job.title}</h4>
-              <p>Company: {job.company}</p>
-              <p>Location: {job.location}</p>
-              <p>Stipend: {job.stipend}</p>
-
-              <a href={job.applyLink} target="_blank">
-                Apply
-              </a>
-
-            </div>
-          ))}
-
-
-          <h3>All Internships</h3>
-
-          {internships.map((job,index)=>(
-            <div
-              key={index}
-              style={{
-                border:"1px solid gray",
-                padding:"10px",
-                margin:"10px"
-              }}
-            >
-
-              <h4>{job.title}</h4>
-              <p>Company: {job.company}</p>
-              <p>Location: {job.location}</p>
-              <p>Stipend: {job.stipend}</p>
-
-              <a href={job.applyLink} target="_blank">
-                Apply
+              <a
+                href={job.link}
+                target="_blank"
+                rel="noreferrer"
+                className="apply"
+              >
+                Apply Now
               </a>
 
             </div>
           ))}
 
         </div>
-
       )}
 
     </div>
-
   );
-
 }
 
 export default App;
