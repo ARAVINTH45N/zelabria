@@ -2,66 +2,63 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const Internship = require("../models/Internship");
 
-const scrapeInternships = async () => {
+async function scrapeRemoteOK() {
+  try {
 
-    try{
+    console.log("Running internship scraper...");
 
-        const url = "https://remoteok.com/remote-dev-jobs";
+    const url = "https://remoteok.com/remote-dev-jobs";
 
-        const response = await axios.get(url,{
-            headers:{
-                "User-Agent":"Mozilla/5.0"
-            }
+    const response = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0"
+      }
+    });
+
+    const $ = cheerio.load(response.data);
+
+    const jobs = [];
+
+    $("tr.job").each((index, element) => {
+
+      const title = $(element).find("h2").text().trim();
+      const company = $(element).find(".companyLink h3").text().trim();
+      const location = "Remote";
+
+      const link =
+        "https://remoteok.com" +
+        $(element).attr("data-href");
+
+      if (title && company) {
+        jobs.push({
+          title,
+          company,
+          location,
+          link
         });
+      }
 
-        const $ = cheerio.load(response.data);
+    });
 
-        const jobs = [];
+    for (const job of jobs) {
 
-        $("tr.job").each((index,element)=>{
+      const exists = await Internship.findOne({
+        title: job.title,
+        company: job.company
+      });
 
-            const title = $(element).find("h2").text().trim();
-            const company = $(element).find(".companyLink h3").text().trim();
-
-            if(title && company){
-
-                jobs.push({
-                    title,
-                    company,
-                    location:"Remote",
-                    skills:["JavaScript"],
-                    stipend:"Not specified",
-                    applyLink:url
-                });
-
-            }
-
-        });
-
-        for(const job of jobs){
-
-            const exists = await Internship.findOne({
-                title:job.title,
-                company:job.company
-            });
-
-            if(!exists){
-
-                const internship = new Internship(job);
-                await internship.save();
-
-                console.log("New internship added:",job.title);
-
-            }
-
-        }
-
-    }catch(error){
-
-        console.log("Scraper error:",error.message);
+      if (!exists) {
+        await Internship.create(job);
+        console.log("Saved:", job.title);
+      }
 
     }
 
-};
+    console.log("Scraping completed");
 
-module.exports = scrapeInternships;
+  } catch (error) {
+    console.error("Scraper error:", error.message);
+  }
+}
+
+module.exports = scrapeRemoteOK;

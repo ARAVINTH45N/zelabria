@@ -1,16 +1,15 @@
 const cron = require("node-cron");
-const scrapeInternships = require("./internshipScraper");
+const scrapeRemoteOK = require("./internshipScraper");
 
-const startScraper = () => {
+function startScraper() {
 
-    cron.schedule("*/30 * * * *", async () => {
+  scrapeRemoteOK();
 
-        console.log("Running internship scraper...");
+  cron.schedule("0 * * * *", () => {
+    console.log("Running scheduled scraper...");
+    scrapeRemoteOK();
+  });
 
-        await scrapeInternships();
-
-    });
-
-};
+}
 
 module.exports = startScraper;
