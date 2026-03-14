@@ -10,14 +10,16 @@ async function scrapeInternships() {
 
     const response = await axios.get(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9"
       }
     });
 
     const $ = cheerio.load(response.data);
 
     $("tr.job").each(async (index, element) => {
-
       const title = $(element).find("h2").text().trim();
       const company = $(element).find(".companyLink h3").text().trim();
       const location = "Remote";
@@ -43,7 +45,6 @@ async function scrapeInternships() {
 
         console.log("Saved:", title);
       }
-
     });
 
     console.log("Scraping completed");
