@@ -2,9 +2,8 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const Internship = require("../models/Internship");
 
-async function scrapeRemoteOK() {
+async function scrapeInternships() {
   try {
-
     console.log("Running internship scraper...");
 
     const url = "https://remoteok.com/remote-dev-jobs";
@@ -17,9 +16,7 @@ async function scrapeRemoteOK() {
 
     const $ = cheerio.load(response.data);
 
-    const jobs = [];
-
-    $("tr.job").each((index, element) => {
+    $("tr.job").each(async (index, element) => {
 
       const title = $(element).find("h2").text().trim();
       const company = $(element).find(".companyLink h3").text().trim();
@@ -29,30 +26,25 @@ async function scrapeRemoteOK() {
         "https://remoteok.com" +
         $(element).attr("data-href");
 
-      if (title && company) {
-        jobs.push({
+      if (!title || !company) return;
+
+      const exists = await Internship.findOne({
+        title,
+        company
+      });
+
+      if (!exists) {
+        await Internship.create({
           title,
           company,
           location,
           link
         });
+
+        console.log("Saved:", title);
       }
 
     });
-
-    for (const job of jobs) {
-
-      const exists = await Internship.findOne({
-        title: job.title,
-        company: job.company
-      });
-
-      if (!exists) {
-        await Internship.create(job);
-        console.log("Saved:", job.title);
-      }
-
-    }
 
     console.log("Scraping completed");
 
@@ -61,4 +53,4 @@ async function scrapeRemoteOK() {
   }
 }
 
-module.exports = scrapeRemoteOK;
+module.exports = scrapeInternships;
