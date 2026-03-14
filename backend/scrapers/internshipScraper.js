@@ -2,6 +2,7 @@ const axios = require("axios");
 const Internship = require("../models/Internship");
 
 async function scrapeInternships() {
+
   try {
 
     console.log("Running internship scraper...");
