@@ -1,127 +1,89 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 
+// REGISTER USER
+const registerUser = async (req, res) => {
+  try {
 
-// SIGNUP
-exports.signup = async (req, res) => {
+    const { name, email, password, phone } = req.body;
 
-    try {
+    // check if user exists
+    const existingUser = await User.findOne({ email });
 
-        const { name, email, password } = req.body;
-
-        const existingUser = await User.findOne({ email });
-
-        if (existingUser) {
-            return res.status(400).json({
-                message: "User already exists"
-            });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = new User({
-            name,
-            email,
-            password: hashedPassword
-        });
-
-        await user.save();
-
-        res.status(201).json({
-            message: "User registered successfully"
-        });
-
-    } catch (error) {
-
-        res.status(500).json({
-            error: error.message
-        });
-
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User already exists"
+      });
     }
 
+    // hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      phone
+    });
+
+    await user.save();
+
+    res.json({
+      message: "User registered successfully",
+      user
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      message: "Registration failed"
+    });
+
+  }
 };
 
 
+// LOGIN USER
+const loginUser = async (req, res) => {
 
-// LOGIN
-exports.login = async (req, res) => {
+  try {
 
-    try {
+    const { email, password } = req.body;
 
-        const { email, password } = req.body;
+    const user = await User.findOne({ email });
 
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            return res.status(400).json({
-                message: "User not found"
-            });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if (!isMatch) {
-            return res.status(400).json({
-                message: "Invalid password"
-            });
-        }
-
-        const token = jwt.sign(
-            { userId: user._id },
-            "secretkey",
-            { expiresIn: "1d" }
-        );
-
-        res.json({
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email
-            }
-        });
-
-    } catch (error) {
-
-        res.status(500).json({
-            error: error.message
-        });
-
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found"
+      });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Invalid password"
+      });
+    }
+
+    res.json({
+      message: "Login successful",
+      user
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Login failed"
+    });
+
+  }
 
 };
 
-
-
-// UPDATE USER PROFILE
-exports.updateProfile = async (req, res) => {
-
-    try {
-
-        const { userId, skills, role, location } = req.body;
-
-        const user = await User.findByIdAndUpdate(
-            userId,
-            {
-                skills,
-                role,
-                location
-            },
-            { new: true }
-        );
-
-        res.json({
-            message: "Profile updated",
-            user
-        });
-
-    } catch (error) {
-
-        res.status(500).json({
-            error: error.message
-        });
-
-    }
-
+module.exports = {
+  registerUser,
+  loginUser
 };
