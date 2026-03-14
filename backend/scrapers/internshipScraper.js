@@ -2,17 +2,15 @@ const axios = require("axios");
 const Internship = require("../models/Internship");
 
 async function scrapeInternships() {
-
   try {
-
     console.log("Running internship scraper...");
 
+    // RemoteOK public JSON feed
     const response = await axios.get("https://remoteok.com/api");
 
     const jobs = response.data;
 
     for (let i = 1; i < jobs.length; i++) {
-
       const job = jobs[i];
 
       const title = job.position;
@@ -24,30 +22,24 @@ async function scrapeInternships() {
 
       const exists = await Internship.findOne({
         title,
-        company
+        company,
       });
 
       if (!exists) {
-
         await Internship.create({
           title,
           company,
           location,
-          link
+          link,
         });
 
         console.log("Saved:", title);
-
       }
-
     }
 
     console.log("Scraping completed");
-
   } catch (error) {
-
     console.error("Scraper error:", error.message);
-
   }
 }
 
