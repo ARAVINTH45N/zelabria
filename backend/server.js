@@ -1,11 +1,10 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
 const dotenv = require("dotenv");
-const path = require("path");
+const cors = require("cors");
 
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, "../.env") });
+// Load env
+dotenv.config();
 
 const app = express();
 
@@ -13,49 +12,43 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Import Routes
-const authRoutes = require("./routes/authRoutes");
-const internshipRoutes = require("./routes/internshipRoutes");
-const matchingRoutes = require("./routes/matchingRoutes");
-const userRoutes = require("./routes/userRoutes");
-const profileRoutes = require("./routes/profileRoutes");
-
-// Import Scraper Scheduler
-const startScraper = require("./scrapers/scheduler");
+// Serve uploaded files
+app.use("/uploads", express.static("uploads"));
 
 // Routes
+const userRoutes = require("./routes/userRoutes");
+const authRoutes = require("./routes/authRoutes");
+const resumeRoutes = require("./routes/resumeRoutes");
+const profileRoutes = require("./routes/profileRoutes");
+const internshipRoutes = require("./routes/internshipRoutes");
+const matchingRoutes = require("./routes/matchingRoutes");
+
+app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/internships", internshipRoutes);
-app.use("/api/match", matchingRoutes);
-app.use("/api/user", userRoutes);
+app.use("/api/resume", resumeRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/internships", internshipRoutes);
+app.use("/api/matching", matchingRoutes);
 
-// Test route
-app.get("/", (req, res) => {
-  res.send("ZELABRIA Internship API running");
-});
-
-// Server port
-const PORT = process.env.PORT || 5000;
-
-// Debug log
-console.log("Loaded MONGO_URI:", process.env.MONGO_URI);
-
-// MongoDB connection
+// MongoDB connection (SAFE — won't crash server)
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-
-    console.log("MongoDB Atlas connected");
-
-    // Start internship scraper + scheduler
-    startScraper();
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-
+    console.log("✅ MongoDB connected");
   })
   .catch((err) => {
-    console.error("MongoDB connection error:", err);
+    console.error("❌ MongoDB connection failed:", err.message);
+    console.log("⚠️ Server running WITHOUT DB");
   });
+
+// Test route
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
+
+// Start server
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});

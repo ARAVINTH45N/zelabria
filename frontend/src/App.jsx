@@ -1,79 +1,28 @@
-import { useEffect, useState } from "react";
-import "./index.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 function App() {
-
-  const [internships, setInternships] = useState([]);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  const API_URL = "https://zelabria-api.onrender.com";
-
-  useEffect(() => {
-    fetchInternships();
-  }, []);
-
-  const fetchInternships = async () => {
-    try {
-
-      const res = await fetch(`${API_URL}/api/internships`);
-      const data = await res.json();
-
-      setInternships(data);
-      setLoading(false);
-
-    } catch (error) {
-      console.error("Error fetching internships:", error);
-    }
-  };
-
-  const filteredInternships = internships.filter((job) =>
-    job.title.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
-    <div className="container">
+    <BrowserRouter>
 
-      <h1 className="title">ZELABRIA Internship Alerts</h1>
+      {/* Global Navbar */}
+      <Navbar />
 
-      <input
-        type="text"
-        placeholder="Search internships..."
-        className="search"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
 
-      {loading ? (
-        <p className="loading">Loading internships...</p>
-      ) : (
-        <div className="grid">
-
-          {filteredInternships.map((job) => (
-            <div className="card" key={job._id}>
-
-              <h2>{job.title}</h2>
-
-              <p className="company">{job.company}</p>
-
-              <p>{job.location}</p>
-
-              <a
-                href={job.link}
-                target="_blank"
-                rel="noreferrer"
-                className="apply"
-              >
-                Apply Now
-              </a>
-
-            </div>
-          ))}
-
-        </div>
-      )}
-
-    </div>
+    </BrowserRouter>
   );
 }
 

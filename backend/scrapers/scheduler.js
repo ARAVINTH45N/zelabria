@@ -3,46 +3,37 @@ const cron = require("node-cron");
 const scrapeInternships = require("./internshipScraper");
 const { checkMatchesForAllUsers } = require("../services/matchingService");
 
-const startScraper = () => {
+function startScraper() {
 
-  console.log("Running internship scraper...");
+  console.log("Scheduler started...");
 
-  // Run immediately when server starts
-  runScraper();
+  /* RUN ON SERVER START */
 
-  // Run every 6 hours
+  scrapeInternships();
+  checkMatchesForAllUsers();
+
+  /* RUN EVERY 1 MINUTE (FOR TESTING) */
+
   cron.schedule("0 */6 * * *", async () => {
 
-    console.log("Scheduled scraper running...");
+    console.log("Running scheduled tasks...");
 
-    await runScraper();
+    try {
+
+      await scrapeInternships();
+
+      await checkMatchesForAllUsers();
+
+      console.log("Scheduler cycle completed");
+
+    } catch (error) {
+
+      console.error("Scheduler error:", error);
+
+    }
 
   });
 
-};
-
-const runScraper = async () => {
-
-  try {
-
-    console.log("Starting internship scraping...");
-
-    await scrapeInternships();
-
-    console.log("Scraping completed");
-
-    console.log("Running matching engine...");
-
-    await checkMatchesForAllUsers();
-
-    console.log("Matching completed");
-
-  } catch (error) {
-
-    console.error("Scraper error:", error.message);
-
-  }
-
-};
+}
 
 module.exports = startScraper;

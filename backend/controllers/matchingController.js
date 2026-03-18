@@ -1,11 +1,16 @@
 const User = require("../models/User");
 const Internship = require("../models/Internship");
 
-const findMatches = async (req, res) => {
+const sendEmail = require("../services/emailService");
+const sendWhatsapp = require("../services/whatsappService");
+
+exports.findMatches = async (req, res) => {
 
   try {
 
     const { userId } = req.params;
+
+    console.log("Matching request for user:", userId);
 
     const user = await User.findById(userId);
 
@@ -15,35 +20,68 @@ const findMatches = async (req, res) => {
       });
     }
 
-    const skills = user.skills || [];
+    const userSkills = user.skills || [];
+
+    console.log("User skills:", userSkills);
 
     const internships = await Internship.find();
 
-    const matches = internships.filter(job => {
+    const matches = internships.filter(job =>
+      job.skills.some(skill =>
+        userSkills.includes(skill)
+      )
+    );
 
-      const title = job.title.toLowerCase();
+    console.log("Matches found:", matches.length);
 
-      return skills.some(skill =>
-        title.includes(skill.toLowerCase())
-      );
+    if (matches.length > 0) {
 
-    });
+      const subject = "ZELABRIA Internship Match Found";
+
+      const message = `
+Hello ${user.name},
+
+We found ${matches.length} internships matching your skills.
+
+Matched skills:
+${userSkills.join(", ")}
+
+Login to ZELABRIA dashboard to view them.
+
+Regards,
+ZELABRIA
+`;
+
+      console.log("Attempting email to:", user.email);
+
+      await sendEmail(user.email, subject, message);
+
+      if (user.phone) {
+
+        console.log("Attempting WhatsApp to:", user.phone);
+
+        await sendWhatsapp(
+          user.phone,
+          `ZELABRIA: ${matches.length} internships match your skills. Check your dashboard.`
+        );
+
+      }
+
+    }
 
     res.json({
-      userSkills: skills,
+      userSkills,
       matches
     });
 
   } catch (error) {
 
-    console.error(error);
+    console.error("Matching controller error:", error);
 
     res.status(500).json({
-      message: "Matching error"
+      message: "Matching failed"
     });
 
   }
 
 };
-
-module.exports = { findMatches };

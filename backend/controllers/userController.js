@@ -1,25 +1,30 @@
 const User = require("../models/User");
 
-const updateSkills = async (req, res) => {
+exports.updateSkills = async (req, res) => {
+
   try {
 
     const { userId, skills } = req.body;
 
     const user = await User.findByIdAndUpdate(
       userId,
-      { skills },
+      { skills: skills },
       { new: true }
     );
 
-    res.json(user);
+    res.json({
+      message: "Skills updated",
+      user
+    });
 
-  } catch (error) {
+  } catch (err) {
+
+    console.log(err);
 
     res.status(500).json({
       message: "Error updating skills"
     });
 
   }
-};
 
-module.exports = { updateSkills };
+};

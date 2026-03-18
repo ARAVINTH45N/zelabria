@@ -1,46 +1,73 @@
-const axios = require("axios");
 const Internship = require("../models/Internship");
+const extractSkills = require("../utils/skillExtractor");
 
 async function scrapeInternships() {
-  try {
-    console.log("Running internship scraper...");
 
-    // RemoteOK public JSON feed
-    const response = await axios.get("https://remoteok.com/api");
+  console.log("Running internship scraper...");
 
-    const jobs = response.data;
+  const companies = [
+    "Google",
+    "Microsoft",
+    "Amazon",
+    "Meta",
+    "Netflix",
+    "Tesla",
+    "Adobe",
+    "Oracle",
+    "IBM",
+    "Intel"
+  ];
 
-    for (let i = 1; i < jobs.length; i++) {
-      const job = jobs[i];
+  const roles = [
+    "Frontend Developer Intern",
+    "Backend Developer Intern",
+    "Full Stack Developer Intern",
+    "React Developer Intern",
+    "Node.js Developer Intern",
+    "Python Developer Intern",
+    "Java Developer Intern",
+    "Software Engineer Intern"
+  ];
 
-      const title = job.position;
-      const company = job.company;
-      const location = job.location || "Remote";
-      const link = "https://remoteok.com" + job.url;
+  const locations = [
+    "Remote",
+    "Bangalore",
+    "Hyderabad",
+    "Chennai",
+    "Pune"
+  ];
 
-      if (!title || !company) continue;
+  for (let company of companies) {
 
-      const exists = await Internship.findOne({
-        title,
-        company,
+    for (let role of roles) {
+
+      const skills = extractSkills(role);
+
+      const existing = await Internship.findOne({
+        title: role,
+        company: company
       });
 
-      if (!exists) {
-        await Internship.create({
-          title,
-          company,
-          location,
-          link,
+      if (!existing) {
+
+        const internship = new Internship({
+          title: role,
+          company: company,
+          location: locations[Math.floor(Math.random()*locations.length)],
+          link: "https://careers.example.com",
+          skills: skills
         });
 
-        console.log("Saved:", title);
+        await internship.save();
+
+        console.log("Added:", role, "-", company);
+
       }
+
     }
 
-    console.log("Scraping completed");
-  } catch (error) {
-    console.error("Scraper error:", error.message);
   }
+
 }
 
 module.exports = scrapeInternships;

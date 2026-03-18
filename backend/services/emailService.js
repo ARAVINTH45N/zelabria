@@ -1,40 +1,32 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: "aravinth.vnagarajan@gmail.com",
-        pass: "wjch gyst nipf auoa"
-    }
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
 });
 
+async function sendEmail(to, subject, text) {
 
-const sendInternshipAlert = async (email, internship) => {
+  try {
 
-    const mailOptions = {
-        from: "aravinth.vnagarajan@gmail.com",
-        to: email,
-        subject: "New Internship Match Found 🚀",
-        text: `
-Hello,
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: to,
+      subject: subject,
+      text: text
+    });
 
-A new internship matches your skills!
+    console.log("Email sent:", info.response);
 
-Role: ${internship.title}
-Company: ${internship.company}
-Location: ${internship.location}
-Stipend: ${internship.stipend}
+  } catch (error) {
 
-Apply here:
-${internship.applyLink}
+    console.error("Email error:", error);
 
-Good luck!
+  }
 
-- ZELABRIA Internship Alerts
-`
-    };
+}
 
-    await transporter.sendMail(mailOptions);
-};
-
-module.exports = sendInternshipAlert;
+module.exports = sendEmail;
